@@ -39,8 +39,24 @@ class _ListaAppState extends State<ListaApp> {
         novaTarefa["concluido"] = false;
         _tarefas.add(novaTarefa);
         _salvarDados();
+        _recarregaLista();
       });
     }
+  }
+
+  Future<Null> _recarregaLista() async {
+    await Future.delayed(Duration(seconds: 1));
+    setState(() {
+      _tarefas.sort((a, b) {
+        if (a["concluido"] && !b["concluido"])
+          return 1;
+        else if (a["concluido"] && b["concluido"])
+          return -1;
+        else
+          return 0;
+      });
+      _salvarDados();
+    });
   }
 
   @override
@@ -79,10 +95,13 @@ class _ListaAppState extends State<ListaApp> {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.only(top: 10),
-                itemCount: _tarefas.length,
-                itemBuilder: BuildTarefa,
+              child: RefreshIndicator(
+                onRefresh: _recarregaLista,
+                child: ListView.builder(
+                  padding: EdgeInsets.only(top: 10),
+                  itemCount: _tarefas.length,
+                  itemBuilder: BuildTarefa,
+                ),
               ),
             )
           ],
@@ -111,12 +130,16 @@ class _ListaAppState extends State<ListaApp> {
         secondary: CircleAvatar(
           child: Icon(
             _tarefas[index]["concluido"] ? Icons.check : Icons.error,
+            color: Colors.white,
           ),
+          backgroundColor:
+              _tarefas[index]["concluido"] ? Colors.grey : Colors.red,
         ),
         onChanged: (checked) {
           setState(() {
             _tarefas[index]["concluido"] = checked;
             _salvarDados();
+            _recarregaLista();
           });
         },
       ),
